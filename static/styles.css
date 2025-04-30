@@ -1,0 +1,138 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+header {
+    background-color: #008080;
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+.logo {
+    height: 60px;
+    margin-bottom: 10px;
+}
+
+.hero {
+    text-align: center;
+    padding: 2rem;
+}
+
+.jersey-img {
+    max-width: 200px;
+    margin: 20px auto;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #008080;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.status {
+    padding: 2rem;
+    text-align: center;
+}
+
+table {
+    width: 80%;
+    margin: auto;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.count {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+footer {
+    text-align: center;
+    padding: 1rem;
+    background-color: #eee;
+    margin-top: 2rem;
+}
+.form-section {
+    width: 80%;
+    max-width: 500px;
+    margin: auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.form-section form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-section label {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.form-section input {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.flash {
+    list-style: none;
+    padding: 10px;
+    background-color: #d4edda;
+    color: #155724;
+    margin-bottom: 1rem;
+    border: 1px solid #c3e6cb;
+    border-radius: 5px;
+}
+/* Logo Container (Rectangular) */
+.logo-container {
+    width: 120px;        /* Slightly larger rectangular width */
+    height: 60px;        /* Fixed height for rectangular shape */
+    display: flex;
+    align-items: center; /* Centers logo vertically */
+    justify-content: center; /* Centers logo horizontally */
+    margin-right: 15px;
+}
+
+/* White Background (Matches logo) */
+.logo-background {
+    background: white;
+    padding: 5px;        /* Creates breathing space */
+    border-radius: 4px;  /* Soft rounded corners */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle depth */
+}
+
+/* Logo Itself (Scales to container) */
+.company-logo {
+    max-width: 100%;     /* Ensures responsiveness */
+    max-height: 50px;    /* Controls height */
+    object-fit: contain; /* Prevents distortion */
+}
+
+/* Footer Logo (Smaller Version) */
+.footer-logo {
+    width: 80px;         /* Smaller than header */
+    height: 40px;
+}
+
+/* Header alignment */
+.logo-branding {
+    display: flex;
+    align-items: center; /* Vertically centers logo + text */
+}
