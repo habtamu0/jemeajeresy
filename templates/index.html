@@ -1130,15 +1130,15 @@
 </div>
 
             {% if players|length >= 32 %}
-   <div class="text-center animate-fade delay-2">
-        <form action="{{ url_for('assign_numbers') }}" method="get" class="mb-3">
+   {% if not shuffle_done %}
+    <div class="text-center animate-fade delay-2">
+        <form action="{{ url_for('shuffle_numbers') }}" method="get" class="mb-3">
             <button type="submit" class="btn btn-primary">
-                <i class="fas fa-random"></i> Assign Jersey Numbers
+                <i class="fas fa-random"></i> Shuffle Jersey Numbers
             </button>
         </form>
     </div>
-{% endif %}
-    </div>
+    {% endif %}
 {% endif %}
 
             <section class="jersey-grid-container animate-fade delay-1">
