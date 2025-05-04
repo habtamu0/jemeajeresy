@@ -1,9 +1,9 @@
 from flask import Flask, render_template, flash, redirect, url_for, request
 import sqlite3
+import random
 
 app = Flask(__name__)
 app.secret_key = 'jemeajereseysecret!'
-
 
 DATABASE = 'database.db'
 
@@ -16,13 +16,16 @@ def get_registered_players():
 
     players = []
     assigned_numbers = []
-    
+
     for row in rows:
         player_id, name, p1, p2, p3, assigned = row
         preferred = [p for p in [p1, p2, p3] if p is not None]
         preferred_display = ', '.join(map(str, preferred))
-        
+
         # Build status information
+        status = "Pending"
+        status_class = "status-pending"
+
         if assigned:
             assigned_numbers.append(assigned)
             prefs = {p1, p2, p3}
@@ -32,21 +35,18 @@ def get_registered_players():
             else:
                 status = f"Assigned: #{assigned} (Not preferred)"
                 status_class = "status-unlucky"
-        else:
-            status = "Pending"
-            status_class = "status-pending"
-        
+
         players.append({
             'id': player_id,
             'name': name,
             'preferred_numbers': preferred_display,
-            'preferred_list': preferred,  # Keep as list for processing
+            'preferred_list': preferred,
             'assigned': assigned,
             'assigned_number': assigned,
             'status': status,
             'status_class': status_class
         })
-    
+
     return {
         'players': players,
         'assigned_numbers': assigned_numbers
@@ -54,113 +54,81 @@ def get_registered_players():
 
 @app.route('/')
 def index():
-    # Get registered players data
     data = get_registered_players()
     players = data['players']
     assigned_numbers = data['assigned_numbers']
     assigned_players = [p for p in players if p.get('assigned')]
 
-    # Check if assignment has already been done
+    # Check if shuffle has been done
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
-    
-    try:
-        cursor.execute("SELECT assigned FROM assignment_status WHERE id = 1")
-        result = cursor.fetchone()
-        assignment_done = bool(result[0]) if result else False
-    except Exception as e:
-        print(f"Error checking assignment status: {e}")
-        assignment_done = False
-    finally:
+    cursor.execute("SELECT shuffled FROM shuffle_status WHERE id = 1")
+    result = cursor.fetchone()
+    shuffle_done = bool(result[0]) if result else False
+    conn.close()
+
+    return render_template(
+        'index.html',
+        players=players,
+        assigned_numbers=assigned_numbers,
+        assigned_players=assigned_players,
+        current_user_numbers=[],
+        progress_percent=(len(players)/32 * 100),
+        shuffle_done=shuffle_done
+    )
+
+@app.route('/shuffle', methods=['GET'])
+def shuffle_numbers():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    # Check if already shuffled
+    cursor.execute("SELECT shuffled FROM shuffle_status WHERE id = 1")
+    result = cursor.fetchone()
+    if result and result[0]:
+        flash("Reshuffling is disabled after initial use.", "info")
         conn.close()
-
-    return render_template('index.html',
-                           players=players,
-                           assigned_numbers=assigned_numbers,
-                           assigned_players=assigned_players,
-                           current_user_numbers=[],
-                           progress_percent=(len(players)/32*100),
-                           assignment_done=assignment_done)
-
-import sqlite3
-
-conn = sqlite3.connect('database.db')
-cursor = conn.cursor()
-
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    preferred1 INTEGER,
-    preferred2 INTEGER,
-    preferred3 INTEGER,
-    assigned INTEGER
-)
-''')
-
-conn.commit()
-conn.close()
-
-import random
-
-@app.route('/assign', methods=['GET'])
-def assign_numbers():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-
-    # Check if already assigned
-    cursor.execute("SELECT assigned FROM assignment_status WHERE id = 1")
-    already_assigned = cursor.fetchone()[0]
-
-    if already_assigned:
-        flash("Numbers have already been assigned.", "info")
         return redirect(url_for('index'))
 
-    # Reset all assignments before assigning (first-time only)
+    # Reset all previous assignments
     cursor.execute("UPDATE players SET assigned = NULL")
 
-    # Get unassigned players
-    cursor.execute("""
-        SELECT id, name, preferred1, preferred2, preferred3 
-        FROM players 
-        ORDER BY RANDOM()
-    """)
+    # Get all players (random order)
+    cursor.execute("SELECT id, preferred1, preferred2, preferred3 FROM players")
     players = cursor.fetchall()
 
-    # Get all taken numbers
-    cursor.execute("SELECT assigned FROM players WHERE assigned IS NOT NULL")
-    taken_numbers = {row[0] for row in cursor.fetchall()}
+    # Get available numbers
+    all_numbers = list(range(1, 100))
+    random.shuffle(all_numbers)
 
-    # Available jersey numbers
-    all_numbers = set(range(1, 100))
-    available_numbers = list(all_numbers - taken_numbers)
-    random.shuffle(available_numbers)
+    unassigned_players = []
 
-    # Assignment logic
-    assigned_count = 0
+    # First pass: Assign from preferences
     for player in players:
-        player_id, name, p1, p2, p3 = player
-        prefs = [n for n in [p1, p2, p3] if n is not None and n in available_numbers]
+        player_id, p1, p2, p3 = player
+        prefs = [n for n in [p1, p2, p3] if n is not None and n in all_numbers]
 
         if prefs:
             assigned_number = random.choice(prefs)
-        elif available_numbers:
-            assigned_number = available_numbers.pop()
+            cursor.execute("UPDATE players SET assigned = ? WHERE id = ?", (assigned_number, player_id))
+            all_numbers.remove(assigned_number)
         else:
-            break  # No numbers left
+            unassigned_players.append(player_id)
 
-        cursor.execute("UPDATE players SET assigned = ? WHERE id = ?", (assigned_number, player_id))
-        available_numbers.remove(assigned_number)
-        assigned_count += 1
+    # Second pass: Assign remaining players with leftover numbers
+    random.shuffle(unassigned_players)
+    for player_id in unassigned_players:
+        if all_numbers:
+            assigned_number = random.choice(all_numbers)
+            cursor.execute("UPDATE players SET assigned = ? WHERE id = ?", (assigned_number, player_id))
+            all_numbers.remove(assigned_number)
 
-    # Mark as assigned
-    cursor.execute("UPDATE assignment_status SET assigned = 1 WHERE id = 1")
-
+    # Mark shuffle as done
+    cursor.execute("UPDATE shuffle_status SET shuffled = 1 WHERE id = 1")
     conn.commit()
     conn.close()
 
-    flash(f"Assigned jersey numbers to {assigned_count} players!", "success")
+    flash(f"Jersey numbers have been shuffled fairly among all players!", "success")
     return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -187,20 +155,36 @@ def register():
     return render_template('register.html')
 
 
-# Create status table to track if numbers have been assigned
+# Create tables on startup
 with app.app_context():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
+
+    # Players table
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS assignment_status (
-            id INTEGER PRIMARY KEY,
-            assigned BOOLEAN DEFAULT 0
+        CREATE TABLE IF NOT EXISTS players (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            preferred1 INTEGER,
+            preferred2 INTEGER,
+            preferred3 INTEGER,
+            assigned INTEGER
         )
     ''')
-    # Initialize with one row if not exists
-    cursor.execute("INSERT OR IGNORE INTO assignment_status (id, assigned) VALUES (1, 0)")
+
+    # Shuffle status table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS shuffle_status (
+            id INTEGER PRIMARY KEY,
+            shuffled BOOLEAN DEFAULT 0
+        )
+    ''')
+    cursor.execute("INSERT OR IGNORE INTO shuffle_status (id, shuffled) VALUES (1, 0)")
+
     conn.commit()
     conn.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
