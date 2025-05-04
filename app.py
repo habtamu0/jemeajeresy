@@ -42,6 +42,7 @@ def get_registered_players():
             'preferred_numbers': preferred_display,
             'preferred_list': preferred,  # Keep as list for processing
             'assigned': assigned,
+            'assigned_number': assigned,
             'status': status,
             'status_class': status_class
         })
@@ -89,24 +90,26 @@ conn.close()
 import random
 
 @app.route('/assign', methods=['GET'])
-import random
-from flask import flash
-
 def assign_numbers():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
-    # Reset all assignments first if we're doing a reshuffle
-    if request.args.get('reshuffle'):
-        cursor.execute("UPDATE players SET assigned = NULL")
-        flash("All assignments have been reset for reshuffling", "info")
+    # Check if already assigned
+    cursor.execute("SELECT assigned FROM assignment_status WHERE id = 1")
+    already_assigned = cursor.fetchone()[0]
 
-    # Get all unassigned players and their preferences
+    if already_assigned:
+        flash("Numbers have already been assigned.", "info")
+        return redirect(url_for('index'))
+
+    # Reset all assignments before assigning (first-time only)
+    cursor.execute("UPDATE players SET assigned = NULL")
+
+    # Get unassigned players
     cursor.execute("""
         SELECT id, name, preferred1, preferred2, preferred3 
         FROM players 
-        WHERE assigned IS NULL
-        ORDER BY RANDOM()  # Randomize the order for fairness
+        ORDER BY RANDOM()
     """)
     players = cursor.fetchall()
 
@@ -114,59 +117,35 @@ def assign_numbers():
     cursor.execute("SELECT assigned FROM players WHERE assigned IS NOT NULL")
     taken_numbers = {row[0] for row in cursor.fetchall()}
 
-    # Get all possible numbers (1-99)
+    # Available jersey numbers
     all_numbers = set(range(1, 100))
-    available_numbers = all_numbers - taken_numbers
+    available_numbers = list(all_numbers - taken_numbers)
+    random.shuffle(available_numbers)
 
-    # Assignment process
-    unassigned_players = []
+    # Assignment logic
     assigned_count = 0
-
     for player in players:
         player_id, name, p1, p2, p3 = player
-        preferred = [p for p in [p1, p2, p3] if p is not None and p in available_numbers]
-        
-        if preferred:
-            # Assign a random preferred number
-            assigned_number = random.choice(preferred)
-            cursor.execute(
-                "UPDATE players SET assigned = ? WHERE id = ?",
-                (assigned_number, player_id)
-            )
-            available_numbers.remove(assigned_number)
-            assigned_count += 1
-        else:
-            # No preferred numbers available
-            unassigned_players.append((player_id, name))
+        prefs = [n for n in [p1, p2, p3] if n is not None and n in available_numbers]
 
-    # Assign remaining numbers to unassigned players
-    if available_numbers and unassigned_players:
-        remaining_numbers = list(available_numbers)
-        random.shuffle(remaining_numbers)
-        
-        for player_id, name in unassigned_players:
-            if remaining_numbers:
-                assigned_number = remaining_numbers.pop()
-                cursor.execute(
-                    "UPDATE players SET assigned = ? WHERE id = ?",
-                    (assigned_number, player_id)
-                )
-                assigned_count += 1
-            else:
-                break
+        if prefs:
+            assigned_number = random.choice(prefs)
+        elif available_numbers:
+            assigned_number = available_numbers.pop()
+        else:
+            break  # No numbers left
+
+        cursor.execute("UPDATE players SET assigned = ? WHERE id = ?", (assigned_number, player_id))
+        available_numbers.remove(assigned_number)
+        assigned_count += 1
+
+    # Mark as assigned
+    cursor.execute("UPDATE assignment_status SET assigned = 1 WHERE id = 1")
 
     conn.commit()
     conn.close()
 
-    # Prepare feedback message
-    if assigned_count:
-        msg = f"Assigned {assigned_count} numbers! "
-        if unassigned_players:
-            msg += f"{len(unassigned_players)} players couldn't get preferred numbers."
-        flash(msg, "success")
-    else:
-        flash("No new assignments made", "info")
-
+    flash(f"Assigned jersey numbers to {assigned_count} players!", "success")
     return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -192,6 +171,21 @@ def register():
 
     return render_template('register.html')
 
+
+# Create status table to track if numbers have been assigned
+with app.app_context():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS assignment_status (
+            id INTEGER PRIMARY KEY,
+            assigned BOOLEAN DEFAULT 0
+        )
+    ''')
+    # Initialize with one row if not exists
+    cursor.execute("INSERT OR IGNORE INTO assignment_status (id, assigned) VALUES (1, 0)")
+    conn.commit()
+    conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
