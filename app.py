@@ -53,19 +53,34 @@ def get_registered_players():
     }
 
 @app.route('/')
-@app.route('/')
 def index():
+    # Get registered players data
     data = get_registered_players()
     players = data['players']
     assigned_numbers = data['assigned_numbers']
     assigned_players = [p for p in players if p.get('assigned')]
+
+    # Check if assignment has already been done
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
     
+    try:
+        cursor.execute("SELECT assigned FROM assignment_status WHERE id = 1")
+        result = cursor.fetchone()
+        assignment_done = bool(result[0]) if result else False
+    except Exception as e:
+        print(f"Error checking assignment status: {e}")
+        assignment_done = False
+    finally:
+        conn.close()
+
     return render_template('index.html',
-                         players=players,
-                         assigned_numbers=assigned_numbers,
-                         assigned_players=assigned_players,  # Add this
-                         current_user_numbers=[],
-                         progress_percent=(len(players)/32*100))
+                           players=players,
+                           assigned_numbers=assigned_numbers,
+                           assigned_players=assigned_players,
+                           current_user_numbers=[],
+                           progress_percent=(len(players)/32*100),
+                           assignment_done=assignment_done)
 
 import sqlite3
 
