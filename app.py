@@ -69,16 +69,6 @@ def index():
     shuffle_done = bool(result[0]) if result else False
     conn.close()
 
-    # Check if any player has been assigned a number
-    has_assigned = any(p.get('assigned_number') for p in players)
-
-    # Set session flag only if not already set and someone is assigned
-    if has_assigned and 'seen_congrats' not in session:
-        session['seen_congrats'] = True
-        show_modal = True
-    else:
-        show_modal = False
-
     return render_template(
         'index.html',
         players=players,
@@ -86,8 +76,7 @@ def index():
         assigned_players=assigned_players,
         current_user_numbers=[],
         progress_percent=(len(players)/32 * 100),
-        shuffle_done=shuffle_done,
-        show_modal=show_modal
+        shuffle_done=shuffle_done
     )
 
 @app.route('/shuffle', methods=['GET'])
