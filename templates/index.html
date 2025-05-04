@@ -534,7 +534,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 2.5rem;
     font-weight: bold;
+    margin: 1rem 0;
+    color: var(--secondary);
     cursor: pointer;
     position: relative; /* Needed for absolute positioning of pseudo-elements */
     perspective: 1000px; /* Enables 3D space */
@@ -1534,31 +1537,47 @@ updateJerseyGrid({{ assigned_numbers|tojson }});
     </div>
 </div>
 </body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <script>
-                showToast("{{ message }}", "{{ category }}");
-                {% if category == 'success' %}
-                    showConfetti();
-                {% endif %}
-            </script>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-<!-- Congratulation Modal for Assigned Players -->
-{% for player in players %}
-    {% if show_modal %}
+   <!-- Congratulation Modal for Assigned Players -->
 <script>
+    // Only show modal once per browser session
+    const congratsShown = localStorage.getItem('congratsShown');
+
     window.addEventListener('DOMContentLoaded', function() {
-        showCongratsModal({
-            name: "{{ players[0].name }}",
-            number: {{ players[0].assigned_number }},
-            statusClass: "{{ players[0].status_class }}",
-            statusText: "{{ players[0].status }}"
-        });
+        const player = {{ players|selectattr('assigned_number')|first|tojson }};
+        if (player && !congratsShown) {
+            showCongratsModal({
+                name: player.name,
+                number: player.assigned_number,
+                statusClass: player.status_class,
+                statusText: player.status
+            });
+            localStorage.setItem('congratsShown', 'true');
+        }
     });
+
+    function showCongratsModal({ name, number, statusClass, statusText }) {
+        const modal = document.getElementById('congrats-modal');
+        const jerseyNumber = document.getElementById('modal-jersey-number');
+        const message = document.getElementById('modal-message');
+
+        jerseyNumber.textContent = '#' + number;
+
+        // Generalized message
+        let customMessage = '';
+        if (statusText.includes('Not preferred')) {
+            customMessage = `You didn’t get one of your preferred numbers, but we’ve randomly assigned you jersey #${number}. We hope it works well for you!`;
+        } else {
+            customMessage = `You got one of your preferred numbers: jersey #${number}! Wishing you a great time wearing it!`;
+        }
+
+        message.innerHTML = customMessage;
+        modal.classList.add('show');
+        showConfetti();
+    }
+
+    function closeCongratsModal() {
+        const modal = document.getElementById('congrats-modal');
+        modal.classList.remove('show');
+    }
 </script>
-{% endif %}
 </html>
