@@ -54,25 +54,17 @@ def get_registered_players():
 @app.route('/')
 @app.route('/')
 def index():
-    # Get all players data
-    players = get_registered_players()
-    
-    # Prepare the assigned numbers list
-    assigned_numbers = [p['assigned'] for p in players if p.get('assigned')]
-    
-    # Prepare current user's numbers (example - adjust based on your auth system)
-    current_user_numbers = []
-    
-    
-    # Calculate progress
-    progress_percent = (len(players) / 32) * 100
+    data = get_registered_players()
+    players = data['players']
+    assigned_numbers = data['assigned_numbers']
+    assigned_players = [p for p in players if p.get('assigned')]
     
     return render_template('index.html',
                          players=players,
                          assigned_numbers=assigned_numbers,
-                         current_user_numbers=current_user_numbers,
-                         progress_percent=progress_percent)
-
+                         assigned_players=assigned_players,  # Add this
+                         current_user_numbers=[],
+                         progress_percent=(len(players)/32*100))
 
 import sqlite3
 
