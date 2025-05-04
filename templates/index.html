@@ -1366,6 +1366,7 @@
     z-index: 2;
     padding-bottom: 2rem;
 }
+        
 
 #congrats-modal.show .congrats-box {
     transform: scale(1) translateY(0);
@@ -1818,6 +1819,120 @@
     }
     100% {
         transform: rotate(360deg);
+    }
+}
+        /* Add these media queries to your existing CSS */
+@media (max-width: 768px) {
+    /* Scale down the main modal container */
+    .congrats-box {
+        transform: scale(0.9) translateY(50px);
+        max-width: 90%;
+    }
+    
+    #congrats-modal.show .congrats-box {
+        transform: scale(0.9) translateY(0);
+    }
+
+    /* Scale down text elements proportionally */
+    .congrats-title {
+        font-size: 2rem;
+    }
+    
+    .title-emoji {
+        font-size: 1.8rem;
+    }
+    
+    .congrats-text {
+        font-size: 1rem;
+    }
+    
+    /* Scale down the jersey display */
+    .jersey-display {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .jersey-number-modal {
+        font-size: 3.5rem;
+    }
+    
+    /* Scale down the medal */
+    .medal-badge {
+        top: -20px;
+    }
+    
+    .medal-circle {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+    
+    /* Scale down the ribbon */
+    .congrats-ribbon {
+        right: -55px;
+        padding: 6px 55px;
+        font-size: 0.8rem;
+    }
+    
+    /* Scale down background elements */
+    .bg-circle.circle-1 {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .bg-circle.circle-2 {
+        width: 400px;
+        height: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Further scale down for very small screens */
+    .congrats-box {
+        transform: scale(0.8) translateY(50px);
+    }
+    
+    #congrats-modal.show .congrats-box {
+        transform: scale(0.8) translateY(0);
+    }
+
+    .congrats-title {
+        font-size: 1.8rem;
+    }
+    
+    .title-emoji {
+        font-size: 1.5rem;
+    }
+    
+    .jersey-display {
+        width: 130px;
+        height: 130px;
+    }
+    
+    .jersey-number-modal {
+        font-size: 3rem;
+    }
+    
+    .medal-circle {
+        width: 60px;
+        height: 60px;
+        font-size: 1.8rem;
+    }
+    
+    .congrats-ribbon {
+        right: -60px;
+        padding: 5px 50px;
+    }
+    
+    /* Scale down background elements further */
+    .bg-circle.circle-1 {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .bg-circle.circle-2 {
+        width: 350px;
+        height: 350px;
     }
 }
 
