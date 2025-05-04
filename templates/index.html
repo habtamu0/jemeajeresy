@@ -1823,10 +1823,17 @@
 }
         /* Add these media queries to your existing CSS */
 @media (max-width: 768px) {
+        #congrats-modal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px; /* Adds safe space around edges */
     /* Scale down the main modal container */
     .congrats-box {
-        transform: scale(0.9) translateY(50px);
-        max-width: 90%;
+        transform: scale(0.9) translateY(0); /* Removed vertical translation */
+        margin: 0 auto; /* Ensures horizontal centering */
+        max-width: calc(100% - 40px); /* Prevents edge cropping */
+        width: auto; /* Allows natural width */
     }
     
     #congrats-modal.show .congrats-box {
@@ -1869,7 +1876,8 @@
     
     /* Scale down the ribbon */
     .congrats-ribbon {
-        right: -55px;
+        right: -60px;
+        top: 20px;
         padding: 6px 55px;
         font-size: 0.8rem;
     }
@@ -1889,7 +1897,8 @@
 @media (max-width: 480px) {
     /* Further scale down for very small screens */
     .congrats-box {
-        transform: scale(0.8) translateY(50px);
+        transform: scale(0.8) translateY(0); /* Removed vertical translation */
+        max-width: calc(100% - 30px); /* More space on very small screens */
     }
     
     #congrats-modal.show .congrats-box {
@@ -1920,8 +1929,10 @@
     }
     
     .congrats-ribbon {
-        right: -60px;
-        padding: 5px 50px;
+        right: -65px;
+        top: 15px;
+        padding: 5px 45px;
+        font-size: 0.7rem;
     }
     
     /* Scale down background elements further */
