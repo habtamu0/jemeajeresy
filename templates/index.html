@@ -686,6 +686,70 @@
     background: #fff3e0;
     color: #e65100;
 }
+    /* === Congratulations Modal === */
+#congrats-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease;
+}
+#congrats-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+.congrats-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: fadeInUp 0.6s ease;
+}
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+.congrats-box h2 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+.congrats-box p {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+.congrats-box .jersey-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 1rem 0;
+    display: inline-block;
+    color: var(--secondary);
+}
+.btn-close {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}    
 
         /* Button Styles */
         .btn {
@@ -1409,6 +1473,7 @@
             rows.forEach(row => tbody.appendChild(row));
         }
     });
+    
     // Add this to your existing script section
 function updateJerseyGrid(assignedNumbers) {
     document.querySelectorAll('.jersey-number').forEach(box => {
@@ -1421,6 +1486,33 @@ function updateJerseyGrid(assignedNumbers) {
             box.classList.add('available');
         }
     });
+    // === CONGRATULATIONS MODAL LOGIC ===
+function showCongratsModal({ name, number, statusClass, statusText }) {
+    const modal = document.getElementById('congrats-modal');
+    const jerseyNumber = document.getElementById('modal-jersey-number');
+    const message = document.getElementById('modal-message');
+
+    // Set jersey number
+    jerseyNumber.textContent = '#' + number;
+
+    // Customize message based on preference match
+    let customMessage = '';
+    if (statusText.includes('Not preferred')) {
+        customMessage = `You didn’t get one of your preferred numbers, but we’ve randomly assigned you jersey #${number}. We hope it works well for you!`;
+    } else {
+        customMessage = `You got one of your preferred numbers: jersey #${number}! Wishing you a great time wearing it!`;
+    }
+
+    message.innerHTML = customMessage;
+
+    modal.classList.add('show');
+    showConfetti(); // Optional confetti
+}
+
+function closeCongratsModal() {
+    const modal = document.getElementById('congrats-modal');
+    modal.classList.remove('show');
+}
 }
 
 // Call this after assignment/reshuffle
@@ -1428,6 +1520,19 @@ function updateJerseyGrid(assignedNumbers) {
 updateJerseyGrid({{ assigned_numbers|tojson }});
     
 </script>
+    <!-- Congratulations Modal -->
+<div id="congrats-modal">
+    <div class="congrats-box">
+        <h2>Congratulations!</h2>
+        <p><strong>Your jersey number has been successfully assigned.</strong></p>
+        <div class="jersey-number" id="modal-jersey-number">#XX</div>
+        <p id="modal-message">We hope you enjoy your new number and have a great season ahead!</p>
+        <p style="font-size: 0.9rem; color: #666; margin-top: 1rem;">
+            Powered by <strong>Sarfus Innovations - Arefat Mohammed</strong>
+        </p>
+        <button class="btn-close" onclick="closeCongratsModal()">OK, Thanks!</button>
+    </div>
+</div>
 </body>
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -1441,4 +1546,21 @@ updateJerseyGrid({{ assigned_numbers|tojson }});
         {% endfor %}
     {% endif %}
 {% endwith %}
+
+<!-- Congratulation Modal for Assigned Players -->
+{% for player in players %}
+    {% if player.assigned_number and not session.seen_congrats %}
+        {% set session.seen_congrats = true %}
+        <script>
+            window.addEventListener('DOMContentLoaded', function() {
+                   showCongratsModal({
+                    name: "{{ player.name }}",
+                    number: {{ player.assigned_number }},
+                    statusClass: "{{ player.status_class }}",
+                    statusText: "{{ player.status }}"
+                });
+            });
+        </script>
+    {% endif %}
+{% endfor %}
 </html>
