@@ -542,6 +542,7 @@
     transform-style: preserve-3d;
     text-decoration: none;
 }
+        
 
 /* === Flip Hover Effect === */
 .jersey-number:hover {
@@ -616,6 +617,19 @@
     color: #1565c0;
     box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3);
 }
+        .jersey-number.assigned {
+    background: #ffebee;
+    border: 2px solid #ef9a9a;
+    color: var(--danger);
+}
+
+.jersey-number.assigned::after {
+    content: "X";
+    position: absolute;
+    font-size: 1.5rem;
+    color: var(--danger);
+    font-weight: bold;
+}
         /* Players Table */
         .players-table {
             width: 100%;
@@ -668,6 +682,10 @@
             background: #e8f5e9;
             color: var(--success);
         }
+        .status-unlucky {
+    background: #fff3e0;
+    color: #e65100;
+}
 
         /* Button Styles */
         .btn {
@@ -1128,6 +1146,19 @@
                     {% endfor %}
                 </div>
             </section>
+            <section class="jersey-grid-container">
+    <h2 class="section-title">Jersey Number Availability</h2>
+    <div class="jersey-grid">
+        {% for number in range(1, 100) %}
+            <div class="jersey-number 
+                {% if number in assigned_numbers %}assigned{% else %}available{% endif %}
+                {% if number in current_user_numbers %}yours{% endif %}"
+                data-number="{{ number }}">
+                {{ number }}
+            </div>
+        {% endfor %}
+    </div>
+</section>
 
             <section class="countdown-container animate-fade delay-2">
                 <h3 class="countdown-title">Registration Closes In:</h3>
@@ -1168,11 +1199,10 @@
                             <td>{{ player.name }}</td>
                             <td>{{ player.preferred_numbers|join(', ') }}</td>
                             <td>
-                                <span class="status-badge
-                                    {% if player.status == 'Assigned' %}status-assigned{% else %}status-pending{% endif %}">
-                                    {{ player.status }}
-                                </span>
-                            </td>
+    <span class="status-badge {{ player.status_class }}">
+        {{ player.status }}
+    </span>
+</td>
                             <td>
                                 {% if player.assigned_number %}
                                     <strong>#{{ player.assigned_number }}</strong>
