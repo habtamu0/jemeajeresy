@@ -15,13 +15,17 @@ def get_registered_players():
     conn.close()
 
     players = []
+    assigned_numbers = []
+    
     for row in rows:
-        name = row[1]
-        preferred = ', '.join([str(p) for p in row[2:5] if p])
-        assigned = row[5]
+        player_id, name, p1, p2, p3, assigned = row
+        preferred = [p for p in [p1, p2, p3] if p is not None]
+        preferred_display = ', '.join(map(str, preferred))
         
+        # Build status information
         if assigned:
-            prefs = {row[2], row[3], row[4]}
+            assigned_numbers.append(assigned)
+            prefs = {p1, p2, p3}
             if assigned in prefs:
                 status = f"Assigned: #{assigned}"
                 status_class = "status-assigned"
@@ -31,14 +35,21 @@ def get_registered_players():
         else:
             status = "Pending"
             status_class = "status-pending"
-            
+        
         players.append({
+            'id': player_id,
             'name': name,
-            'preferred_numbers': preferred,
+            'preferred_numbers': preferred_display,
+            'preferred_list': preferred,  # Keep as list for processing
+            'assigned': assigned,
             'status': status,
             'status_class': status_class
         })
-    return players
+    
+    return {
+        'players': players,
+        'assigned_numbers': assigned_numbers
+    }
 
 @app.route('/')
 @app.route('/')
