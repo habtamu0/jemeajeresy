@@ -66,6 +66,19 @@ def init_db():
         )
         ''', (MAX_JERSEY_NUMBER, MAX_JERSEY_NUMBER, MAX_JERSEY_NUMBER, MAX_JERSEY_NUMBER))
 
+        # Create shuffle status table
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS shuffle_status (
+        id INTEGER PRIMARY KEY,
+        shuffled BOOLEAN DEFAULT 0
+    )
+''')
+
+# Initialize shuffle status
+cursor.execute('''
+    INSERT OR IGNORE INTO shuffle_status (id, shuffled) VALUES (1, 0)
+''')
+
         # Create admin users table
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS admin_users (
