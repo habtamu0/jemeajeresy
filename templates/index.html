@@ -1549,18 +1549,16 @@ updateJerseyGrid({{ assigned_numbers|tojson }});
 
 <!-- Congratulation Modal for Assigned Players -->
 {% for player in players %}
-    {% if player.assigned_number and not session.seen_congrats %}
-        {% set session.seen_congrats = true %}
-        <script>
-            window.addEventListener('DOMContentLoaded', function() {
-                   showCongratsModal({
-                    name: "{{ player.name }}",
-                    number: {{ player.assigned_number }},
-                    statusClass: "{{ player.status_class }}",
-                    statusText: "{{ player.status }}"
-                });
-            });
-        </script>
-    {% endif %}
-{% endfor %}
+    {% if show_modal %}
+<script>
+    window.addEventListener('DOMContentLoaded', function() {
+        showCongratsModal({
+            name: "{{ players[0].name }}",
+            number: {{ players[0].assigned_number }},
+            statusClass: "{{ players[0].status_class }}",
+            statusText: "{{ players[0].status }}"
+        });
+    });
+</script>
+{% endif %}
 </html>
