@@ -1130,21 +1130,14 @@
 </div>
 
             {% if players|length >= 32 %}
-    <div class="text-center animate-fade delay-2">
+   <div class="text-center animate-fade delay-2">
         <form action="{{ url_for('assign_numbers') }}" method="get" class="mb-3">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-random"></i> Assign Jersey Numbers
             </button>
         </form>
-        
-        {% if assigned_players %}
-        <form action="{{ url_for('assign_numbers') }}" method="get">
-            <input type="hidden" name="reshuffle" value="1">
-            <button type="submit" class="btn btn-warning">
-                <i class="fas fa-sync-alt"></i> Reshuffle All Numbers
-            </button>
-        </form>
-        {% endif %}
+    </div>
+{% endif %}
     </div>
 {% endif %}
 
@@ -1433,6 +1426,19 @@ function updateJerseyGrid(assignedNumbers) {
 // Call this after assignment/reshuffle
 // You'll need to pass the new assigned numbers from your Flask template
 updateJerseyGrid({{ assigned_numbers|tojson }});
+    
 </script>
 </body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <script>
+                showToast("{{ message }}", "{{ category }}");
+                {% if category == 'success' %}
+                    showConfetti();
+                {% endif %}
+            </script>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 </html>
