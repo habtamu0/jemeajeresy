@@ -1032,6 +1032,15 @@
 @keyframes fadeOut {
     to { opacity: 0; }
 }
+@keyframes assignedAnimation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.jersey-number.newly-assigned {
+    animation: assignedAnimation 0.5s ease;
+}
 
 
         }
@@ -1121,18 +1130,23 @@
 </div>
 
             {% if players|length >= 32 %}
-                <div class="text-center animate-fade delay-2">
-                    <form action="{{ url_for('assign_numbers') }}" method="get">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-random"></i> Assign Jersey Numbers
-                        </button>
-                    </form>
-                </div>
-            {% else %}
-                <div class="alert alert-warning text-center animate-fade delay-2">
-                    <i class="fas fa-info-circle"></i> Waiting for {{ 32 - players|length }} more players to register before assignments can begin.
-                </div>
-            {% endif %}
+    <div class="text-center animate-fade delay-2">
+        <form action="{{ url_for('assign_numbers') }}" method="get" class="mb-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-random"></i> Assign Jersey Numbers
+            </button>
+        </form>
+        
+        {% if assigned_players %}
+        <form action="{{ url_for('assign_numbers') }}" method="get">
+            <input type="hidden" name="reshuffle" value="1">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-sync-alt"></i> Reshuffle All Numbers
+            </button>
+        </form>
+        {% endif %}
+    </div>
+{% endif %}
 
             <section class="jersey-grid-container animate-fade delay-1">
                 <h2 class="section-title">Jersey Number Availability</h2>
@@ -1158,6 +1172,15 @@
             </div>
         {% endfor %}
     </div>
+                <div class="jersey-number assigned" data-assigned-to="Player Name">
+    {{ number }}
+    <span class="tooltip">Assigned to Player Name</span>
+</div>
+           <div class="jersey-filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="available">Available</button>
+    <button class="filter-btn" data-filter="assigned">Assigned</button>
+</div> 
 </section>
 
             <section class="countdown-container animate-fade delay-2">
@@ -1393,6 +1416,23 @@
             rows.forEach(row => tbody.appendChild(row));
         }
     });
+    // Add this to your existing script section
+function updateJerseyGrid(assignedNumbers) {
+    document.querySelectorAll('.jersey-number').forEach(box => {
+        const number = parseInt(box.dataset.number);
+        box.classList.remove('available', 'assigned');
+        
+        if (assignedNumbers.includes(number)) {
+            box.classList.add('assigned');
+        } else {
+            box.classList.add('available');
+        }
+    });
+}
+
+// Call this after assignment/reshuffle
+// You'll need to pass the new assigned numbers from your Flask template
+updateJerseyGrid({{ assigned_numbers|tojson }});
 </script>
 </body>
 </html>
